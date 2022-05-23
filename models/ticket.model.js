@@ -24,7 +24,8 @@ const ticketSchema = new mongoose.Schema({
 		type: String
 	},
 	assignee: {
-		type: String
+		type: String,
+		default: 'none'
 	},
 	createdAt: {
 		type: Date,

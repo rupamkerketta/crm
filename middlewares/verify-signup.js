@@ -5,7 +5,7 @@ const constants = require('../utils/constants')
 
 exports.verifySignUpMiddleware = async (req, res, next) => {
 	// name, userId, password, email, userType, userStatus
-	const { name, userId, password, email, userType, userStatus } = req.body
+	const { name, userId, password, email, userType } = req.body
 
 	if (!name) {
 		throw new BadRequestError('Failed! User name required!')
@@ -50,6 +50,7 @@ exports.verifySignUpMiddleware = async (req, res, next) => {
 		if (!userTypesArr.includes(_userType)) {
 			throw new BadRequestError('Failed! invalid userType!')
 		}
+		req.body.userType = _userType
 	}
 
 	next()

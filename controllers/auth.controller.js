@@ -1,11 +1,14 @@
 // Controller for signup/registration
+const config = require('config')
+
 const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
+
 const constants = require('../utils/constants')
 const { StatusCodes } = require('http-status-codes')
+
 const User = require('../models/user.model')
 const { BadRequestError, UnauthorizedError } = require('../errors')
-const jwt = require('jsonwebtoken')
-const config = require('config')
 
 exports.signup = async (req, res) => {
 	// userStatus: APPROVED | PENDING | REJECTED
