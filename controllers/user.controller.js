@@ -1,5 +1,6 @@
 // This file will have all the logic to manipulate the {user} resource
 const { StatusCodes } = require('http-status-codes')
+const { BadRequestError } = require('../errors')
 const User = require('../models/user.model')
 const objConverter = require('../utils/obj-converter')
 
@@ -51,12 +52,22 @@ exports.findUserById = async (req, res) => {
 exports.updateUser = async (req, res) => {
 	const userId = req.params.userId
 
+	// Check the userId of it can be updated or not
+	const { newUserId } = req.body
+	const checkUser = await User.findOne({
+		userId: newUserId
+	})
+	if (checkUser) {
+		throw new BadRequestError('userId already taken!')
+	}
+
 	const user = await User.findOneAndUpdate(
 		{ userId },
 		{
 			name: req.body.name,
 			userType: req.body.userType,
-			userStatus: req.body.userStatus
+			userStatus: req.body.userStatus,
+			userId: req.body.newUserId
 		}
 	)
 

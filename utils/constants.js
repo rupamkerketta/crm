@@ -13,7 +13,8 @@ module.exports = {
 	ticketStatus: {
 		open: 'OPEN',
 		closed: 'CLOSED',
-		blocked: 'BLOCKED'
+		blocked: 'BLOCKED',
+		inProgress: 'IN_PROGRESS'
 	},
 	ticketPriority: {
 		one: 1,

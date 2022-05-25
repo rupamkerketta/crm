@@ -2,7 +2,7 @@ const express = require('express')
 const router = express.Router()
 
 const userController = require('../controllers/user.controller')
-const { authJwtMiddleware: authJwt } = require('../middlewares')
+const { authJwtMiddleware: authJwt, userMiddleware } = require('../middlewares')
 
 router
 	.route('/')
@@ -12,6 +12,9 @@ router.route('/:userId').get([authJwt.verifyToken], userController.findUserById)
 
 router
 	.route('/:userId')
-	.put([authJwt.verifyToken, authJwt.isAdmin], userController.updateUser)
+	.put(
+		[authJwt.verifyToken, authJwt.isAdmin, userMiddleware.verifyUpdateData],
+		userController.updateUser
+	)
 
 module.exports = router
