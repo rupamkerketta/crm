@@ -9,6 +9,20 @@ const constants = require('../utils/constants')
 
 const objConverter = require('../utils/obj-converter')
 
+const getEngineer = async () => {
+	const engineer = await User.find({
+		userType: constants.userTypes.engineer,
+		userStatus: constants.userStatus.approved
+	})
+		.sort({ ticketsAssignedSize: 1 })
+		.limit(1)
+
+	if (engineer) {
+		return engineer[0]
+	}
+	return null
+}
+
 exports.createTicket = async (req, res) => {
 	const { title, description, priority } = req.body
 	const ticketObj = {
@@ -18,28 +32,26 @@ exports.createTicket = async (req, res) => {
 		reporter: req.userId
 	}
 
-	// :TODO: Improve the assignment logic for ticket allotment
-
-	// If any Engineer is available
-	const engineer = await User.find({
-		userType: constants.userTypes.engineer,
-		userStatus: constants.userStatus.approved
-	})
+	// Engineer assignment
+	const engineer = await getEngineer()
 
 	if (engineer) {
 		ticketObj.assignee = engineer.userId
 	}
 
 	const ticket = await Ticket.create(ticketObj)
-
 	if (ticket) {
 		const user = await User.findOne({ userId: req.userId })
 		user.ticketsCreated.push(ticket._id)
+		user.ticketsCreatedSize = user.ticketsCreated.length
 		await user.save()
 
 		// Assign the ticker to an engineer
-		engineer.ticketsAssigned.push(ticket._id)
-		await engineer.save()
+		if (engineer) {
+			engineer.ticketsAssigned.push(ticket._id)
+			engineer.ticketsAssignedSize = engineer.ticketsAssigned.length
+			await engineer.save()
+		}
 
 		res.status(StatusCodes.CREATED).send(objConverter.ticketResponse(ticket))
 	} else {
@@ -71,8 +83,16 @@ exports.getAllTickets = async (req, res) => {
 	if (user.userType === constants.userTypes.customer) {
 		queryObjTicket._id = { $in: ticketIds }
 	} else if (user.userType === constants.userTypes.engineer) {
+		// Enginner should get all tickets
+		// - created by him/her &
+		// - assigned to him or her
 		ticketIds.push(...user.ticketsAssigned)
 		queryObjTicket._id = { $in: ticketIds }
+
+		// * Alternate way of query
+		// queryObjTicket._id = {
+		// 	$or: [{ _id: { $in: ticketIds } }, { assignee: req.userId }]
+		// }
 	} else {
 		// do nothing
 	}
@@ -137,6 +157,12 @@ exports.updateTicket = async (req, res) => {
 		ticket.description =
 			description === undefined ? ticket.description : description
 		ticket.priority = priority === undefined ? ticket.priority : priority
+
+		// Ability to re-assign the ticket
+		// if (user.userType === constants.userTypes.admin) {
+		// 	ticket.assignee =
+		// 		req.body.assignee === undefined ? ticket.assignee : req.body.assignee
+		// }
 
 		// Save the updated ticket
 		const updatedTicket = await ticket.save()

@@ -51,6 +51,16 @@ const userSchema = new mongoose.Schema({
 	ticketsAssigned: {
 		type: [mongoose.SchemaTypes.ObjectId],
 		ref: 'Ticket'
+	},
+	ticketsCreatedSize: {
+		type: Number,
+		required: true,
+		default: 0
+	},
+	ticketsAssignedSize: {
+		type: Number,
+		required: true,
+		default: 0
 	}
 })
 
