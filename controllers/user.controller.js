@@ -28,12 +28,13 @@ exports.findAll = async (req, res) => {
 	}
 
 	const allUsers = await User.find(queryObj)
-	const data = objConverter.usersResponse(allUsers)
+	const data = objConverter.userResponseList(allUsers)
 
-	return res.status(StatusCodes.OK).send({ nbHits: allUsers.length, data })
+	res.status(StatusCodes.OK).send({ nbHits: allUsers.length, data })
 }
 
 // Fetch the user based on the userId
+// Only admin is allowed to call this method
 exports.findUserById = async (req, res) => {
 	const userId = req.params.userId
 

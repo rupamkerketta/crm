@@ -10,7 +10,7 @@ const userResponse = (user) => {
 	}
 }
 
-const usersResponse = (users) => {
+const userResponseList = (users) => {
 	const data = []
 
 	users.forEach((user) => {
@@ -34,4 +34,4 @@ const ticketResponse = (ticket) => {
 	}
 }
 
-module.exports = { userResponse, usersResponse, ticketResponse }
+module.exports = { userResponse, userResponseList, ticketResponse }

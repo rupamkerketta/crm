@@ -8,7 +8,9 @@ router
 	.route('/')
 	.get([authJwt.verifyToken, authJwt.isAdmin], userController.findAll)
 
-router.route('/:userId').get([authJwt.verifyToken], userController.findUserById)
+router
+	.route('/:userId')
+	.get([authJwt.verifyToken, authJwt.isAdmin], userController.findUserById)
 
 router
 	.route('/:userId')
