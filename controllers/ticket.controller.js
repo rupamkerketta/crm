@@ -5,6 +5,7 @@ const Ticket = require('../models/ticket.model')
 const User = require('../models/user.model')
 
 const { StatusCodes } = require('http-status-codes')
+const { ForbiddenError, BadRequestError } = require('../errors')
 const constants = require('../utils/constants')
 
 const objConverter = require('../utils/obj-converter')
@@ -163,66 +164,106 @@ exports.updateTicket = async (req, res) => {
 	}
 
 	switch (user.userType) {
-		case 'CUSTOMER':
-			updateTicketUtil()
+		case constants.userTypes.customer:
+			if (user.ticketsCreated.includes(ticket._id)) {
+				updateTicketUtil()
+			} else {
+				throw new ForbiddenError(
+					'Only owner and assignee engineer are allowed to update the ticket!'
+				)
+			}
 			break
-		case 'ENGINEER':
+		case constants.userTypes.engineer:
+			// If the engineer is not the assignee of the ticket but is
+			// the owner of the ticket, engineer should then be allowed to update
+			// the ticket like a normal user.
 			if (
 				ticket.assignee !== user.userId &&
 				user.ticketsCreated.includes(ticket._id)
 			) {
 				updateTicketUtil()
-			} else if (ticket.assignee === user.userId) {
+			}
+			// If the engineer is the assignee of the ticket
+			// Engineer should be allowed to update only the status of the ticket
+			else if (
+				ticket.assignee === user.userId &&
+				!user.ticketsCreated.includes(ticket._id) &&
+				user.ticketsAssigned.includes(ticket._id)
+			) {
 				const { status } = req.body
 				if (status) {
 					ticket.status = status
+				} else {
+					throw new BadRequestError('status field required!')
 				}
-			} else if (ticket.assignee === 'none' && user.ticketsAssignedSize <= 4) {
+			}
+			// The Engineer should be allowed to self-assign the ticket
+			// when ticket.assignee === 'none' and he/she should not have more than
+			// 5 tickets assigned
+			else if (
+				ticket.assignee === 'none' &&
+				user.ticketsAssignedSize <= 4 &&
+				ticket.status === constants.ticketStatus.open
+			) {
 				ticket.assignee = user.userId
 				user.ticketsAssigned.push(ticket._id)
 				user.ticketsAssignedSize += 1
 				await user.save()
+			} else {
+				return res
+					.status(StatusCodes.OK)
+					.send({ message: 'Ticket has already been assigned to an engineer!' })
 			}
 			break
-		case 'ADMIN':
-			// do domething
+		case constants.userTypes.admin:
+			const { assignee, priority } = req.body
+			if (priority) {
+				ticket.priority = priority
+			}
+
+			if (assignee) {
+				const user = await User.findOne({
+					userId: assignee,
+					userType: constants.userTypes.engineer
+				})
+				if (!user) {
+					throw new BadRequestError(
+						'Assignee does not exist or not of type: engineer'
+					)
+				}
+				if (user.ticketsAssigned.includes(ticket._id)) {
+					throw new BadRequestError(
+						`This ticket has already been assigned to ${ticket.assignee}`
+					)
+				}
+
+				// Update the previous assignee of the ticket
+				const prevAssignee = await User.findOne({ userId: ticket.assignee })
+				if (prevAssignee) {
+					prevAssignee.ticketsAssigned = prevAssignee.ticketsAssigned.filter(
+						(_ticket) => _ticket._id !== ticket._id
+					)
+					prevAssignee.ticketsAssignedSize -= 1
+					await prevAssignee.save()
+				}
+
+				// Update the new assignee of the ticket
+				user.ticketsAssigned.push(ticket._id)
+				user.ticketsAssignedSize += 1
+				ticket.assignee = user.userId
+				await user.save()
+			}
 			break
 		default:
-		// throw an error
+			throw new ForbiddenError('Not allowed to update the ticket!')
 	}
 
-	// The ticket should only be updated by the owner of the ticket and the assignee engineer
-	// if (
-	// 	ticket.assignee === user._id ||
-	// 	(user.ticketsCreated !== undefined &&
-	// 		user.ticketsCreated.length !== 0 &&
-	// 		user.ticketsCreated.includes(req.params.id))
-	// ) {
-	// Update the attributes of the saved ticket
-	// const { title, description, priority } = req.body
-
-	// ticket.title = title === undefined ? ticket.title : title
-	// ticket.description =
-	// 	description === undefined ? ticket.description : description
-	// ticket.priority = priority === undefined ? ticket.priority : priority
-
-	// Ability to re-assign the ticket
-	// if (user.userType === constants.userTypes.admin) {
-	// 	ticket.assignee =
-	// 		req.body.assignee === undefined ? ticket.assignee : req.body.assignee
-	// }
-
 	// Save the updated ticket
-	// const updatedTicket = await ticket.save()
+	const updatedTicket = await ticket.save()
 
 	// Return the updated ticket
-	// return res.status(StatusCodes.OK).send({
-	// 	message: `Ticket with id: ${ticket._id} updated successfully!`,
-	// 	ticket: updatedTicket
-	// })
-	// }
-
-	// res.status(StatusCodes.FORBIDDEN).send({
-	// 	message: 'Not allowed to update the ticket!'
-	// })
+	res.status(StatusCodes.OK).send({
+		message: `Ticket with id: ${ticket._id} updated successfully!`,
+		ticket: updatedTicket
+	})
 }
