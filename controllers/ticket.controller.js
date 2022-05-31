@@ -8,6 +8,7 @@ const { StatusCodes } = require('http-status-codes')
 const { ForbiddenError, BadRequestError } = require('../errors')
 const constants = require('../utils/constants')
 
+const notificationServiceClient = require('../utils/notification-service-client')
 const objConverter = require('../utils/obj-converter')
 
 const getEngineer = async (userId) => {
@@ -56,6 +57,16 @@ exports.createTicket = async (req, res) => {
 			engineer.ticketsAssignedSize += 1
 			await engineer.save()
 		}
+
+		// Right place to send the email
+		// Call the notification service
+		notificationServiceClient({
+			ticketId: ticket._id,
+			subject: ticket.title,
+			content: ticket.description,
+			recepientEmails: [engineer.email, user.email],
+			requester: user.userId
+		})
 
 		res.status(StatusCodes.CREATED).send(objConverter.ticketResponse(ticket))
 	} else {
