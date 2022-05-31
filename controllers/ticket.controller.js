@@ -272,6 +272,38 @@ exports.updateTicket = async (req, res) => {
 	// Save the updated ticket
 	const updatedTicket = await ticket.save()
 
+	// Send the email notification according to the userType
+	if (
+		user.userType === constants.userTypes.customer ||
+		user.userType === constants.userTypes.engineer
+	) {
+		const recepient = await User.findOne({ userId: updatedTicket.assignee })
+
+		notificationServiceClient({
+			ticketId: updatedTicket._id,
+			subject: updatedTicket.title,
+			content: updatedTicket.description,
+			recepientEmails: [recepient.email, user.email]
+		})
+	}
+
+	if (user.userType === constants.userTypes.admin) {
+		const recepientsPromiseArr = []
+		recepients.push(
+			User.findOne({ userId: updatedTicket.assignee }),
+			User.findOne({ userId: updatedTicket.reporter })
+		)
+
+		const recepients = await Promise.all(recepientsPromiseArr)
+
+		notificationServiceClient({
+			ticketId: updatedTicket._id,
+			subject: updatedTicket.title,
+			content: updatedTicket.description,
+			recepientEmails: [user.email, recepients[0].email, recepients[1].email]
+		})
+	}
+
 	// Return the updated ticket
 	res.status(StatusCodes.OK).send({
 		message: `Ticket with id: ${ticket._id} updated successfully!`,
