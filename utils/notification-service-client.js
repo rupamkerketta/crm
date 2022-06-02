@@ -2,11 +2,13 @@
 const Client = require('node-rest-client').Client
 const client = new Client()
 
+exports.client = client
+
 // Expose a function which will take the following information
 // subject, content, recepientEmails, requester, ticketId as arguments
 // and then make a POST call
 
-module.exports = ({
+exports.sendEmail = ({
 	ticketId,
 	subject,
 	content,
@@ -39,20 +41,7 @@ module.exports = ({
 	}
 
 	const req = client.post(uri, args, (data, response) => {
-		// console.log(data)
-		console.log(response)
-	})
-
-	req.on('requestTimeout', function (req) {
-		console.log('request has expired')
-		req.abort()
-	})
-
-	req.on('responseTimeout', function (res) {
-		console.log('response has expired')
-	})
-
-	req.on('error', (err) => {
-		console.log('request error', err)
+		console.log('notification request sent')
+		console.log(data)
 	})
 }

@@ -11,23 +11,6 @@ const constants = require('../utils/constants')
 const notificationServiceClient = require('../utils/notification-service-client')
 const objConverter = require('../utils/obj-converter')
 
-const getEngineer = async (userId) => {
-	// If the enginner creates a ticket it should not be assigned
-	// to himself/herself
-	const engineer = await User.find({
-		userId: { $ne: userId },
-		userType: constants.userTypes.engineer,
-		userStatus: constants.userStatus.approved
-	})
-		.sort({ ticketsAssignedSize: 1 })
-		.limit(1)
-
-	if (engineer) {
-		return engineer[0]
-	}
-	return null
-}
-
 exports.createTicket = async (req, res) => {
 	const { title, description, priority } = req.body
 	const ticketObj = {
@@ -38,10 +21,16 @@ exports.createTicket = async (req, res) => {
 	}
 
 	// Engineer assignment
-	const engineer = await getEngineer(req.userId)
+	const engineer = await User.find({
+		userId: { $ne: req.userId },
+		userType: constants.userTypes.engineer,
+		userStatus: constants.userStatus.approved
+	})
+		.sort({ ticketsAssignedSize: 1 })
+		.limit(1)
 
 	if (engineer) {
-		ticketObj.assignee = engineer.userId
+		ticketObj.assignee = engineer[0].userId
 	}
 
 	const ticket = await Ticket.create(ticketObj)
@@ -52,15 +41,15 @@ exports.createTicket = async (req, res) => {
 		await user.save()
 
 		// Assign the ticker to an engineer
-		if (engineer) {
-			engineer.ticketsAssigned.push(ticket._id)
-			engineer.ticketsAssignedSize += 1
-			await engineer.save()
+		if (engineer.length !== 0) {
+			engineer[0].ticketsAssigned.push(ticket._id)
+			engineer[0].ticketsAssignedSize += 1
+			await engineer[0].save()
 		}
 
 		// Right place to send the email
 		// Call the notification service
-		notificationServiceClient({
+		notificationServiceClient.sendEmail({
 			ticketId: ticket._id,
 			subject: ticket.title,
 			content: ticket.description,
@@ -279,7 +268,7 @@ exports.updateTicket = async (req, res) => {
 	) {
 		const recepient = await User.findOne({ userId: updatedTicket.assignee })
 
-		notificationServiceClient({
+		notificationServiceClient.sendEmail({
 			ticketId: updatedTicket._id,
 			subject: updatedTicket.title,
 			content: updatedTicket.description,
@@ -296,7 +285,7 @@ exports.updateTicket = async (req, res) => {
 
 		const recepients = await Promise.all(recepientsPromiseArr)
 
-		notificationServiceClient({
+		notificationServiceClient.client({
 			ticketId: updatedTicket._id,
 			subject: updatedTicket.title,
 			content: updatedTicket.description,
