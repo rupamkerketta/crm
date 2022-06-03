@@ -132,7 +132,7 @@ exports.getOneTicket = async (req, res) => {
 
 // API to updated the ticket
 exports.updateTicket = async (req, res) => {
-	// Check of the ticket exists
+	// Check if the ticket exists or not
 	const ticket = await Ticket.findOne({
 		_id: req.params.id
 	})
