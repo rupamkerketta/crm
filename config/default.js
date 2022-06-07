@@ -11,5 +11,9 @@ module.exports = {
 	},
 	jwtConfig: {
 		secret: process.env.JWT_SECRET
+	},
+	adminConfig: {
+		email: process.env.ADMIN_EMAIL,
+		password: process.env.ADMIN_PASSWORD
 	}
 }
