@@ -19,10 +19,11 @@ const init = async () => {
 			!adminUser &&
 			config.has('adminConfig.email') &&
 			isEmail(config.get('adminConfig.email')) &&
-			config.has('adminConfig.password')
+			config.has('adminConfig.password') &&
+			config.has('adminConfig.name')
 		) {
 			await User.create({
-				name: 'Rupam',
+				name: config.get('adminConfig.name'),
 				userId: 'admin',
 				email: config.get('adminConfig.email'),
 				userType: 'ADMIN',
