@@ -43,7 +43,7 @@ exports.findUserById = async (req, res) => {
 		res.status(StatusCodes.OK).send({ user: objConverter.userResponse(user) })
 	} else {
 		res
-			.status(StatusCodes.OK)
+			.status(StatusCodes.NOT_FOUND)
 			.send({ message: `User with id ${userId} doen't exist` })
 	}
 }
@@ -74,7 +74,7 @@ exports.updateUser = async (req, res) => {
 
 	if (!user) {
 		res
-			.status(StatusCodes.OK)
+			.status(StatusCodes.NOT_FOUND)
 			.send({ message: `User with id ${userId} doen't exist` })
 	} else {
 		res
