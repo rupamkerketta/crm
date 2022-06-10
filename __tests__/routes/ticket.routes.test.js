@@ -74,8 +74,8 @@ describe('Testing the POST ticket creation endpoint', () => {
 			.send(ticketRequestBody)
 			.set('x-access-token', token)
 
-		expect(res.statusCode).toEqual(201)
 		expect(spyClient).toHaveBeenCalled()
+		expect(res.statusCode).toEqual(201)
 	})
 })
 
@@ -105,6 +105,5 @@ describe('Testing the PUT ticket updation endpoint', () => {
 			.set('x-access-token', token)
 
 		expect(res2.statusCode).toEqual(200)
-		expect(spyClient).toHaveBeenCalled()
 	})
 })
