@@ -53,24 +53,33 @@ exports.findUserById = async (req, res) => {
 exports.updateUser = async (req, res) => {
 	const userId = req.params.userId
 
-	// Check the userId of it can be updated or not
+	// Check the userId if it can be updated or not
 	const { newUserId } = req.body
-	const checkUser = await User.findOne({
-		userId: newUserId
-	})
-	if (checkUser) {
-		throw new BadRequestError('userId already taken!')
+	if (newUserId) {
+		const checkUser = await User.findOne({
+			userId: newUserId
+		})
+		if (checkUser) {
+			throw new BadRequestError('userId already taken!')
+		}
 	}
 
-	const user = await User.findOneAndUpdate(
-		{ userId },
-		{
-			name: req.body.name,
-			userType: req.body.userType,
-			userStatus: req.body.userStatus,
-			userId: req.body.newUserId
-		}
-	)
+	const updateDateObj = {}
+	const { name, userType, userStatus } = req.body
+	if (name) {
+		updateDateObj.name = name
+	}
+	if (userType) {
+		updateDateObj.userType = userType
+	}
+	if (userStatus) {
+		updateDateObj.userStatus = userStatus
+	}
+	if (newUserId) {
+		updateDateObj.newUserId = newUserId
+	}
+
+	const user = await User.findOneAndUpdate({ userId }, updateDateObj)
 
 	if (!user) {
 		res

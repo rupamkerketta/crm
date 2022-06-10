@@ -1,39 +1,22 @@
 const { mockRequest, mockResponse } = require('../interceptor')
 const User = require('../../models/user.model')
 const userController = require('../../controllers/user.controller')
+const fs = require('fs')
+const path = require('path')
 
-const userList = [
-	{
-		_id: '629ef9f62ca03b7cd8c4f0e3',
-		user: 'Jack',
-		email: 'jack@pirate.com',
-		userId: 'admin',
-		userType: 'ADMIN',
-		userStatus: 'APPROVED',
-		createdAt: '2022-06-07T07:10:46.860Z',
-		updatedAt: '2022-06-07T07:10:46.861Z'
-	},
-	{
-		_id: '629efcc7ab0b1d619b27c9d2',
-		user: 'Eddie',
-		email: 'eddie@griffin.com',
-		userId: 'eddie101',
-		userType: 'ENGINEER',
-		userStatus: 'APPROVED',
-		createdAt: '2022-06-07T07:22:47.181Z',
-		updatedAt: '2022-06-07T07:22:47.181Z'
-	},
-	{
-		_id: '629efcc7ab0b1d619b27c9d2',
-		user: 'Dave',
-		email: 'dave@chappelle.com',
-		userId: 'dave911',
-		userType: 'CUSTOMER',
-		userStatus: 'APPROVED',
-		createdAt: '2022-06-07T07:22:47.181+00:00',
-		updatedAt: '2022-06-07T07:22:47.181+00:00'
-	}
-]
+let userList
+
+beforeAll(() => {
+	jest.spyOn(console, 'log').mockImplementation(() => {})
+	jest.spyOn(console, 'debug').mockImplementation(() => {})
+
+	const data = fs.readFileSync(
+		path.resolve(__dirname, '../users-test-data.json'),
+		'utf-8'
+	)
+	console.log(__dirname)
+	userList = JSON.parse(data)
+})
 
 describe('Testing find feature of userController', () => {
 	it('unit test the ability to successfully find all the users', async () => {
@@ -95,5 +78,46 @@ describe('Testing find feature of userController', () => {
 		await userController.findUserById(req, res)
 		expect(userSpy).toHaveBeenCalled()
 		expect(res.status).toHaveBeenCalledWith(404)
+	})
+})
+
+describe('Testing update feature of userController', () => {
+	it('unit test the ability to successfully update a specific user', async () => {
+		// External entities that we depend on
+		// 1. req, res
+		const req = mockRequest()
+		const res = mockResponse()
+
+		req.params = { userId: userList[2]._id }
+		req.body = { name: 'Jane', userType: 'ENGINEER', userStatus: 'APPROVED' }
+
+		// Mock User.findOne
+		const userSpy1 = jest.spyOn(User, 'findOne').mockImplementation(() => {
+			for (const user of userList) {
+				if (user._id === req.params.userId) {
+					return Promise.resolve(userList[2])
+				} else {
+					return Promise.resolve(null)
+				}
+			}
+		})
+
+		// Mock User.findOneAndUpdate
+		const userSpy2 = jest
+			.spyOn(User, 'findOneAndUpdate')
+			.mockImplementation((arg1, arg2) => {
+				const user = userList[2]
+				user.name = req.body.name
+				user.userType = req.body.userType
+				user.userStatus = req.body.userStatus
+
+				return Promise.resolve(user)
+			})
+
+		await userController.updateUser(req, res)
+
+		expect(userSpy1).toHaveBeenCalled()
+		expect(userSpy2).toHaveBeenCalled()
+		expect(res.status).toHaveBeenCalledWith(200)
 	})
 })

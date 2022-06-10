@@ -1,0 +1,32 @@
+[
+	{
+		"_id": "629ef9f62ca03b7cd8c4f0e3",
+		"user": "Jack",
+		"email": "jack@pirate.com",
+		"userId": "admin",
+		"userType": "ADMIN",
+		"userStatus": "APPROVED",
+		"createdAt": "2022-06-07T07:10:46.860Z",
+		"updatedAt": "2022-06-07T07:10:46.861Z"
+	},
+	{
+		"_id": "629efcc7ab0b1d619b27c9d2",
+		"user": "Eddie",
+		"email": "eddie@griffin.com",
+		"userId": "eddie101",
+		"userType": "ENGINEER",
+		"userStatus": "APPROVED",
+		"createdAt": "2022-06-07T07:22:47.181Z",
+		"updatedAt": "2022-06-07T07:22:47.181Z"
+	},
+	{
+		"_id": "629efcc7ab0b1d619b27c9d2",
+		"user": "Dave",
+		"email": "dave@chappelle.com",
+		"userId": "dave911",
+		"userType": "CUSTOMER",
+		"userStatus": "APPROVED",
+		"createdAt": "2022-06-07T07:22:47.181+00:00",
+		"updatedAt": "2022-06-07T07:22:47.181+00:00"
+	}
+]
